@@ -465,6 +465,7 @@ extension ChatContextRepository on ChatDatabaseRepository {
         },
         resetVersions: true,
       );
+      await _copyImageContext(sourceId, id, ids);
       final task =
           await (_db.select(_db.extensionEntityRows)..where(
                 (r) =>
@@ -476,7 +477,9 @@ extension ChatContextRepository on ChatDatabaseRepository {
         final value = Map<String, dynamic>.from(
           jsonDecode(task.payload) as Map,
         );
-        if (value['id'] == operation.id) {
+        // Continuing from an installed summary leaves its original task alone.
+        if (value['id'] == operation.id &&
+            !snapshot.operations.any((op) => op.id == operation.id)) {
           value['phase'] = 'completed';
           value['resultConversationId'] = id;
           await saveCompressionTask(sourceId, value);
