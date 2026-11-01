@@ -25,10 +25,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // Flutter controls APK ABI filtering, including --split-per-abi.
+        // Local arm64-only build: restrict the native build to arm64.
+        // Upstream builds all three ABIs.
         externalNativeBuild {
             cmake {
-                abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+                abiFilters += listOf("arm64-v8a")
             }
         }
     }
@@ -42,6 +43,9 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            // Local arm64-only build: --target-platform and abiFilters don't
+            // drop AAR-provided JNI libs for other ABIs, so exclude them.
+            excludes += listOf("lib/armeabi-v7a/**", "lib/x86_64/**")
         }
     }
 
