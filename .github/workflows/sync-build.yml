@@ -7,6 +7,9 @@ on:
 
 permissions:
   contents: write
+  # Upstream commits can edit .github/workflows files; without this the
+  # GITHUB_TOKEN push of the merge is rejected.
+  workflows: write
 
 concurrency:
   group: sync-build
