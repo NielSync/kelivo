@@ -6,6 +6,7 @@ flutter_launcher_icons:
   image_path_ios_dark_transparent: "assets/app_icon_dark.png"
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: assets/app_icon_2.png
+  adaptive_icon_monochrome: assets/app_icon_2.png
   min_sdk_android: 21
   web:
     generate: true
