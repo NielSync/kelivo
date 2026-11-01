@@ -1,0 +1,4 @@
+# These are read by bash during the Gradle fetchProot task; CRLF checkouts
+# make sha256sum look for paths ending in \r and fail the build.
+tool/*.sh text eol=lf
+tool/proot_checksums.txt text eol=lf
