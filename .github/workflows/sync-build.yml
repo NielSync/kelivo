@@ -7,9 +7,6 @@ on:
 
 permissions:
   contents: write
-  # Upstream commits can edit .github/workflows files; without this the
-  # GITHUB_TOKEN push of the merge is rejected.
-  workflows: write
 
 concurrency:
   group: sync-build
@@ -37,6 +34,15 @@ jobs:
           git fetch upstream master
           before="$(git rev-parse HEAD)"
           if git merge --no-edit upstream/master; then
+            # GITHUB_TOKEN cannot push commits that change workflow files.
+            # Keep our .github/workflows as-is across syncs so the push is
+            # always legal; upstream's are manual-only and unused here.
+            if git diff --name-only "$before" HEAD -- .github/workflows/ | grep -q .; then
+              git rm -rqf .github/workflows/
+              git checkout "$before" -- .github/workflows/
+              git commit --amend --no-edit >/dev/null
+              echo "Discarded upstream .github/workflows changes (GITHUB_TOKEN limitation)."
+            fi
             after="$(git rev-parse HEAD)"
             if [ "$after" != "$before" ]; then
               echo "state=changed" >> "$GITHUB_OUTPUT"
