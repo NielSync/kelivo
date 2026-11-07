@@ -82,11 +82,15 @@ dart run build_runner build                 # regenerate Drift code
 ```
 
 ---
+---
 
 ## Machine toolchains (mandatory)
 
-All dev tools are pre-installed in ONE central root: `C:\Users\User\dev-setup\tools\`
-(Flutter 3.47.9, JDK 17 — JAVA_HOME, Gradle 8.14.3, Python 3.12.10, Android SDK).
+Dev toolchains are pre-installed in ONE central root: `C:\Users\User\dev-setup\tools\`
+(Flutter 3.47.9, JDK 17 — JAVA_HOME, Gradle 8.14.3, Android SDK, `gh-2.103.3` —
+`gh` is not on PATH: call `gh-2.103.3\bin\gh.exe`, authenticated as `NielSync`).
+Machine-managed apps resolve via PATH and stay where their installers put them:
+Python 3.12 (`python` / `py`), MiKTeX 26.5 (`lualatex` / `xelatex`), Git 2.56.
 
 Before downloading or installing ANY tool, SDK, or toolchain, run:
 
@@ -101,3 +105,25 @@ powershell -ExecutionPolicy Bypass -File C:\Users\User\dev-setup\tools\check-res
 Full rules: `C:\Users\User\dev-setup\tools\AGENTS.md` · Catalog: `RESOURCES.json` in that folder.
 This project's SDK paths are pinned in `android\local.properties` (`flutter.sdk`, `sdk.dir`) and
 already point into the central root — do not repoint them.
+
+## Fork & build quick reference
+
+- Remotes: `origin` = private fork `NielSync/kelivo-fork` (push all local work here),
+  `upstream` = the master repo `Chevey339/kelivo`, `public` = PR vehicle `NielSync/kelivo`
+  (holds only the icon PR branch `feat/monochrome-themed-icon`).
+- Flutter user config must point centrally: `flutter config --jdk-dir` overrides `JAVA_HOME`;
+  a stale value breaks Gradle with "Please set the JAVA_HOME variable" even when JAVA_HOME is set.
+- Build (arm64-only by fork design; secrets `android/key.properties` + `kelivo-release.jks`
+  stay gitignored):
+  `"C:/Users/User/dev-setup/tools/flutter-3.47.9/bin/flutter.bat" build apk --debug --target-platform android-arm64`
+- Themed icon: regenerate the `drawable-*/ic_launcher_monochrome.png` assets with
+  `dart run tool/gen_monochrome.dart` after any icon change (upstream foregrounds have
+  opaque backgrounds — never point `<monochrome>` at them directly).
+- Sync upstream: `git fetch upstream && git merge upstream/master` — the fork's monochrome
+  layer wins in `mipmap-anydpi-v26/ic_launcher.xml`; `.gitattributes` keeps `tool/*.sh` LF
+  (CRLF breaks the Gradle `fetchProot` task). Run `flutter pub get` after syncing.
+- CI (`.github/workflows/sync-build.yml` on the private fork) syncs upstream + builds a
+  debug APK every Monday 06:00 UTC and via the Actions "Run workflow" button; after a CI
+  sync push, run `git pull --rebase origin master` locally before pushing anything.
+
+**Full project context, decisions and work log: see `HANDOFF.md`** (local-only, keep current).
