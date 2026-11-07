@@ -1,11 +1,14 @@
 @AGENTS.md
 
 ---
+---
 
 ## Machine toolchains (mandatory)
 
-All dev tools are pre-installed in ONE central root: `C:\Users\User\dev-setup\tools\`
-(Flutter 3.47.9, JDK 17 — JAVA_HOME, Gradle 8.14.3, Python 3.12.10, Android SDK).
+Dev toolchains are pre-installed in ONE central root: `C:\Users\User\dev-setup\tools\`
+(Flutter 3.47.9, JDK 17 — JAVA_HOME, Gradle 8.14.3, Android SDK).
+Machine-managed apps resolve via PATH and stay where their installers put them:
+Python 3.12 (`python` / `py`), MiKTeX 26.5 (`lualatex` / `xelatex`), Git 2.56.
 
 Before downloading or installing ANY tool, SDK, or toolchain, run:
 
