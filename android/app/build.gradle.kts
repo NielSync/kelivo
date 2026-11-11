@@ -17,8 +17,10 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.psyche.kelivo"
+        // Downstream delta build: distinct applicationId so this fork installs
+        // side by side with upstream Kelivo builds. The code namespace above
+        // intentionally stays com.psyche.kelivo.
+        applicationId = "com.psyche.kelivo.delta"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
