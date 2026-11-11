@@ -9,11 +9,10 @@ bool compressionShowsDivider(ContextCompressionTask task) =>
       CompressionPhase.preparing ||
       CompressionPhase.summarizing ||
       CompressionPhase.merging ||
+      CompressionPhase.review ||
       CompressionPhase.applying ||
+      CompressionPhase.failed ||
       CompressionPhase.interrupted => true,
-      CompressionPhase.failed =>
-        !(task.error?.contains('context_changed') ?? false) &&
-            !(task.error?.contains('no_messages') ?? false),
       _ => false,
     };
 
@@ -22,6 +21,9 @@ String compressionDividerLabel(
   ContextCompressionTask task, {
   bool waitingForApproval = false,
 }) => switch (task.phase) {
+  CompressionPhase.review => l10n.contextTaskReview,
+  CompressionPhase.preparing => l10n.contextTaskPreparing,
+  CompressionPhase.applying => l10n.contextTaskApplying,
   CompressionPhase.waiting =>
     waitingForApproval
         ? l10n.compressTaskWaitingApproval
@@ -37,12 +39,44 @@ String compressionStatusLabel(
   ContextCompressionTask task,
 ) => switch (task.phase) {
   CompressionPhase.review => l10n.contextTaskReview,
+  CompressionPhase.interrupted => l10n.contextTaskInterrupted,
   CompressionPhase.cancelled => l10n.contextTaskCancelled,
   CompressionPhase.completed => l10n.contextTaskCompleted,
   _ => compressionDividerLabel(l10n, task),
 };
 
 String compressionErrorLabel(AppLocalizations l10n, String error) {
+  if (error.contains('native_compaction_originals_unavailable')) {
+    return l10n.compressionNativeOriginalsUnavailable;
+  }
+  if (error.contains('native_compaction_scope_changed')) {
+    return l10n.compressionNativeScopeChanged;
+  }
+  if (error.contains('native_compaction_missing') ||
+      error.contains('native_compaction_incomplete')) {
+    return l10n.compressionNativeIncomplete;
+  }
+  if (error.contains('compression_near_limit')) {
+    return l10n.compressionNearLimit;
+  }
+  if (error.contains('compression_request_budget')) {
+    return l10n.compressionBudgetError;
+  }
+  if (error.contains('compression_incomplete')) {
+    return l10n.compressionIncomplete;
+  }
+  if (error.contains('compression_reference_too_large')) {
+    return l10n.compressionReferenceTooLarge;
+  }
+  if (error.contains('compression_reference_changed')) {
+    return l10n.compressionReferenceChanged;
+  }
+  if (error.contains('compression_target_not_reached')) {
+    return l10n.compressionTargetNotReached;
+  }
+  if (error.contains('compression_template_missing')) {
+    return l10n.compressionTemplateMissing;
+  }
   if (error.contains('context_budget_exceeded')) return l10n.compressOverSnack;
   if (error.contains('summary_not_smaller')) {
     return l10n.contextSummaryNotSmaller;
@@ -62,6 +96,9 @@ ContextTaskIndicator? contextTaskIndicator(
 }) {
   if (task != null && task.active && task.phase != CompressionPhase.review) {
     return ContextTaskIndicator.running;
+  }
+  if (task?.phase == CompressionPhase.review) {
+    return ContextTaskIndicator.paused;
   }
   if (task != null && compressionShowsDivider(task)) {
     return ContextTaskIndicator.failed;
