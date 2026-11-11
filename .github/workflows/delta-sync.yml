@@ -1,0 +1,86 @@
+name: Sync delta & build debug APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: delta-sync-build
+  cancel-in-progress: false
+
+jobs:
+  sync-build:
+    name: Merge upstream & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/rust /usr/share/rust \
+            /usr/local/lib/android/sdk/ndk /usr/local/lib/android/sdk/emulator \
+            /usr/local/lib/android/sdk/extras || true
+          sudo docker image prune -af > /dev/null 2>&1 || true
+          df -h /
+
+      - uses: actions/checkout@v4
+        with:
+          ref: delta
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "NielSync"
+          git config user.email "NielSync@users.noreply.github.com"
+
+      - name: Merge upstream master into delta
+        id: sync
+        run: |
+          git remote add upstream https://github.com/Chevey339/kelivo.git
+          git fetch upstream master
+          before="$(git rev-parse HEAD)"
+          if git merge --no-edit upstream/master; then
+            # GITHUB_TOKEN cannot push commits that change workflow files;
+            # keep this repository's .github/workflows across syncs.
+            if git diff --name-only "$before" HEAD -- .github/workflows/ | grep -q .; then
+              git rm -rqf .github/workflows/
+              git checkout "$before" -- .github/workflows/
+              git commit --amend --no-edit >/dev/null
+              echo "Discarded upstream .github/workflows changes (GITHUB_TOKEN limitation)."
+            fi
+            after="$(git rev-parse HEAD)"
+            if [ "$after" != "$before" ]; then
+              echo "state=changed" >> "$GITHUB_OUTPUT"
+              git push origin delta
+            else
+              echo "state=up-to-date" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            git merge --abort || true
+            echo "Merge conflict: resolve on the delta branch locally, then re-run."
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.9
+          channel: stable
+          cache: true
+
+      - name: Build debug APK (arm64, delta application id)
+        run: flutter build apk --debug --target-platform android-arm64
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kelivo-delta-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
