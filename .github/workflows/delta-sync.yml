@@ -1,4 +1,5 @@
 name: Sync delta & build debug APK
+# Owner-triggered: merges upstream master into delta and uploads a debug APK artifact.
 
 on:
   workflow_dispatch:
